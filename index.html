@@ -196,8 +196,9 @@
     color:var(--cream);font-size:1.2rem;margin-bottom:.3rem;
   }
 
-  /* reveal on scroll */
-  .reveal{opacity:0;transform:translateY(40px);transition:.7s ease;}
+  /* reveal on scroll — starts visible, animation is a bonus */
+  .reveal{opacity:1;transform:none;transition:.7s ease;}
+  .reveal.prehide{opacity:0;transform:translateY(40px);}
   .reveal.show{opacity:1;transform:none;}
 
   @media(max-width:600px){
@@ -357,19 +358,31 @@
       reader.readAsDataURL(file);
     });
   }
-  // gallery slots
+  // gallery slots — safely wire any that have an input
   document.querySelectorAll('.photo-slot').forEach(slot=>{
-    wireUpload(slot.querySelector('input'),slot);
+    const inp=slot.querySelector('input');
+    if(inp) wireUpload(inp,slot);
   });
-  // hero
-  const heroUp=document.getElementById('heroUpload');
-  wireUpload(heroUp,document.querySelector('.hero-photo'),true);
 
-  /* reveal on scroll */
-  const io=new IntersectionObserver(entries=>{
-    entries.forEach(en=>{if(en.isIntersecting)en.target.classList.add('show');});
-  },{threshold:.15});
-  document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+  /* reveal on scroll — sections are visible by default; this just adds a fade */
+  if('IntersectionObserver' in window){
+    const targets=document.querySelectorAll('.reveal');
+    targets.forEach(el=>el.classList.add('prehide'));
+    const io=new IntersectionObserver(entries=>{
+      entries.forEach(en=>{
+        if(en.isIntersecting){
+          en.target.classList.remove('prehide');
+          en.target.classList.add('show');
+        }
+      });
+    },{threshold:.1});
+    targets.forEach(el=>io.observe(el));
+    // safety net: reveal everything after 2s no matter what
+    setTimeout(()=>targets.forEach(el=>{
+      el.classList.remove('prehide');
+      el.classList.add('show');
+    }),2000);
+  }
 </script>
 
 </body>
